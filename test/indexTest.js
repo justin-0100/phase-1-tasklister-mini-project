@@ -6,7 +6,7 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 const babel = require('@babel/core');
 
-// Load HTML content
+// Load HTML
 const html = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf-8');
 
 // Transform JavaScript using Babel
@@ -21,12 +21,10 @@ const dom = new JSDOM(html, {
   resources: "usable"
 });
 
-// Inject the transformed JavaScript into the virtual DOM
 const scriptElement = dom.window.document.createElement("script");
 scriptElement.textContent = transformedScript;
 dom.window.document.body.appendChild(scriptElement);
 
-// Expose JSDOM globals to the testing environment
 global.window = dom.window;
 global.document = dom.window.document;
 global.navigator = dom.window.navigator;
@@ -35,23 +33,24 @@ global.Node = dom.window.Node;
 global.Text = dom.window.Text;
 global.XMLHttpRequest = dom.window.XMLHttpRequest;
 
-// Sample test suite for JavaScript event handling
 describe('Handling form submission', () => {
-  let form
-  let formInput
-  let taskList
+  let form, formInput, taskList;
 
   before(() => {
-    form = document.querySelector('#create-task-form')
-    formInput = document.querySelector('#new-task-description')
-    taskList = document.querySelector('#tasks')
-  })
+    form = document.querySelector('#create-task-form');
+    formInput = document.querySelector('#new-task-description');
+    taskList = document.querySelector('#tasks');
+  });
 
-  it('should add an event to the form and add input to webpage', () => {
+  it('should add an event to the form and add input to the webpage', (done) => {
     // Simulate user input
-    formInput.value = 'Wash the dishes'
-    const event = new dom.window.Event('submit')
-    form.dispatchEvent(event)
-    expect(taskList.textContent).to.include('Wash the dishes')
-  })
-})
+    formInput.value = 'Wash the dishes';
+    form.dispatchEvent(new dom.window.Event('submit'));
+
+    // Ensure DOM updates
+    setTimeout(() => {
+      expect(taskList.innerHTML).to.include('Wash the dishes');
+      done();
+    }, 100);
+  });
+});
